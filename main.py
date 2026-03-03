@@ -9,18 +9,23 @@ print("INICIANDO GERAÇÃO DE CONTRATOS")
 
 start_time = time.perf_counter()
 
-df = carregar_expositores("dados/expositores.csv")
+df = carregar_expositores()
 
 total_contratos = len(df)
 
 count = 0
+
+PAGAMENTO_PARCELADO = "10% DE ENTRADA E O RESTANTE PARCELADO EM ATÉ 6X SEM JUROS"
 
 if not os.path.exists("contratos"):
         os.makedirs("contratos")
 
 for _, row in df.iterrows():
 
-    doc = DocxTemplate("template/template.docx")
+    if row["Forma de pagamento"] == PAGAMENTO_PARCELADO:
+        doc = DocxTemplate("template/template_parcelado.docx")
+    else:
+         doc = DocxTemplate("template/template_avista.docx")
 
     expositor = preparar_expositor(row)
 

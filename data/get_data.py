@@ -1,18 +1,33 @@
 import pandas as pd
 from num2words import num2words
+import requests
+from io import BytesIO
 
-def carregar_expositores(caminho_csv):
+
+def carregar_expositores(url = 'https://timealfaiataria-my.sharepoint.com/:x:/g/personal/ldr02_alfaiatariadeideias_com_br/IQAkbIGee1upR5u973Mlw3ZmAbLL4eDotl780N5o_-wgFHQ?e=aWswYS&download=1'):
     """
     Carrega a planilha de expositores e faz limpeza básica.
     """
 
-    df = pd.read_csv(caminho_csv)
+    headers = {
+        "User-Agent": "Mozilla/5.0"
+    }
+
+    response = requests.get(url, headers=headers)
+    response.raise_for_status()
+
+    file = BytesIO(response.content)
+    df = pd.read_excel(file, sheet_name="CONTRATOS")
 
     # remover espaços extras nas colunas
     df.columns = df.columns.str.strip()
 
     # substituir valores faltantes
     df = df.fillna("")
+
+    # Filtro Inicial
+    df = df[df["Tipo de STAND:"] == "STAND"]
+    df = df[df["Contrato Status"] == "Aguardando"]
 
     return df
 
@@ -47,6 +62,9 @@ def limpar_valor(valor):
     """
     Limpa valores numéricos.
     """
+
+    if valor == "" or pd.isna(valor):
+        return 0.0
 
     if isinstance(valor, str):
         valor = valor.replace(".", "").replace(",", ".")
