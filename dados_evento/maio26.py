@@ -1,21 +1,16 @@
-import locale
 from datetime import datetime
+from babel.dates import format_date
 
 
 def gerar_data_extenso():
     """
     Gera a data atual por extenso em português.
     """
-    try:
-        locale.setlocale(locale.LC_TIME, "pt_BR.utf-8")
-    except:
-        locale.setlocale(locale.LC_TIME, "Portuguese_Brazil.1252")
-
     hoje = datetime.now()
-    return hoje.strftime("%A, %d de %B de %Y")
+    return format_date(hoje, "EEEE, dd 'de' MMMM 'de' yyyy", locale="pt_BR")
 
 
-evento = {
+evento_stand = {
     "DESCRICAOEVENTO": "EXAGERADO MAIO PAVILHÃO 2026",
     "CPFREPRESENTANTEORGANIZADOR": "013.714.186-67",
     "ENDERECOREPRESENTANTEORGANIZADOR": "Braulina Baptista Lopes, 150, Edíficio, Rosario de Fátima, SERRA/ES. CEP: 29161-121",
@@ -29,7 +24,7 @@ evento = {
     "PENALIDADEIRREGULARIDADE": "R$ 1.000,00",
     "PENALIDADECONTRATACAOMENOR": "R$ 1.000,00",
     "PENALIDADERESCISAO": "R$ 1.000,00",
-    "EXPOSITORDATALIMITEPAGAMENTO": "31/03/2026",
+    "EXPOSITORDATALIMITEPAGAMENTO": "30/03/2026",
     "PRAZOENVIOLOGOMARCA": "04/05/2026",
     "PENALIDADEMARCA": "R$ 1.000,00",
     "PENALIDADEDESVIOFINALIDADE": "R$ 1.000,00",
@@ -50,6 +45,31 @@ evento = {
     "MULTAATRASOFECHAMENTO": "R$ 100,00",
     "HORARIOLIMITEFECHAMENTO": "22:30",
     "DATAPAGAMENTOALUGALSTAND": "04/05/2026",
-    "DATAENTRADA": "20/03/2025",
+    "DATAENTRADA": "10/03/2026",
     "DATAEXTENSO": gerar_data_extenso(),
+}
+
+evento_food = {
+    "EVENTOANO": "EXAGERADO MAIO PAVILHÃO 2026",
+    "NOMEFANTASIAORGANIZADOR": "ALFAIATARIA DE IDEIAS LTDA",
+    "CNPJORGANIZADOR": "22.303.731/0001-49",
+    "ENDERECOCOMPLETOORGANIZADOR": "Rua Braulina Baptista Lopes, 150, Edíficio, Rosario de Fátima, SERRA/ES. CEP: 29161-121",
+    "REPRESENTANTEORGANIZADOR": "VICTOR DE CASTRO PEREIRA",
+    "CPFREPRESENTANTEORGANIZADOR": "013.714.186-67",
+    "ENDERECOREPRESENTANTEORGANIZADOR": "Braulina Baptista Lopes, 150, Edíficio, Rosario de Fátima, SERRA/ES. CEP: 29161-121",
+    "MONTAGEMFOOD": "03/05/26 à 04/05/26",
+    "HORARIOMONTAGEMFOOD": "08h às 18h e 08h às 11h, respectivamente",
+    "NAOMONTAGEMFOOD": "04/03/26 às 12h",
+    "CUSTOCOPOEXAGERADO": "10,00", 
+    "CUSTOCOPOEXAGERADO2": "10,00",
+    "MULTAEXPOSITORABORDAGEM2": "1.000,00",
+    "MULTACONTRATACAOMENORES": "1.000,00 (um mil reais)", 
+    "MULTAAGRESSAO": "", # No caso de conduta inadequada, tais como agressões verbais ou físicas, ou qualquer comportamento que descredencie o EXPOSITOR, seja em relação aos ORGANIZADORES, aos colegas EXPOSITORES ou CLIENTES, a ORGANIZAÇÃO do Evento poderá rescindir seu contrato, solicitando a sua retirada imediata, sem direito a receber o valor dos produtos vendidos quando aplicável, e aplicar multa não compensatória nesse valor
+    "MULTAPRODUTOSNAOALIMENTICIOS": "1.000,00", 
+    "MULTAREPASSEESPACO": "5.000,00 (cinco mil reais)", 
+    "MULTAATRASOPRESENCA": "100,00",
+    "DESISTENCIAEVENTO": "60",
+    "MULTADESISTENCIAINFERIOR": "2.000,00 (dois mil reais)",
+    "MULTAQUEBRACONTRATO": "1.000,00 (um mil reais)",
+    "DATAATUAL": gerar_data_extenso()
 }

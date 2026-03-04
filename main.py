@@ -1,9 +1,17 @@
 from docxtpl import DocxTemplate
 import os
 import time
+from docx2pdf import convert
 
-from dados_evento.maio26 import evento
+from dados_evento.maio26 import evento_stand, evento_food
 from data.get_data import carregar_expositores, preparar_expositor
+from api.autentique import enviar_para_autentique
+import base64
+import json
+    
+def converter_docx_para_pdf(caminho_docx):
+    convert(caminho_docx, keep_active=True)
+    return caminho_docx.replace(".docx", ".pdf")
 
 print("INICIANDO GERAÇÃO DE CONTRATOS")
 
@@ -16,27 +24,70 @@ total_contratos = len(df)
 count = 0
 
 PAGAMENTO_PARCELADO = "10% DE ENTRADA E O RESTANTE PARCELADO EM ATÉ 6X SEM JUROS"
+PAGAMENTO_AVISTA = "PIX COM 5% DE DESCONTO"
 
 if not os.path.exists("contratos"):
         os.makedirs("contratos")
 
 for _, row in df.iterrows():
 
-    if row["Forma de pagamento"] == PAGAMENTO_PARCELADO:
-        doc = DocxTemplate("template/template_parcelado.docx")
-    else:
-         doc = DocxTemplate("template/template_avista.docx")
-
     expositor = preparar_expositor(row)
 
-    context = {**evento, **expositor}
+    tipo = row["Tipo de STAND:"]
+    pagamento = row["Forma de pagamento"]
+
+    print(f"Gerando contrato para: {row["Nome Fantasia"]}\n")
+    print(f"Gerando contrato de tipo: {tipo}\nCom forma de pagamento: {pagamento}\n")
+
+    if tipo == "STAND":
+        context = {**evento_stand, **expositor}
+
+        if pagamento == PAGAMENTO_PARCELADO:
+            doc = DocxTemplate("template/template_parcelado.docx")
+        else:
+            doc = DocxTemplate("template/template_avista.docx")
+
+    elif tipo == "FOOD":
+        context = {**evento_food, **expositor}
+
+        if pagamento == PAGAMENTO_PARCELADO:
+            doc = DocxTemplate("template/template_food_parcelado.docx")
+        else:
+            doc = DocxTemplate("template/template_food_avista.docx")
+
+    else:
+        print(f"Tipo inválido: {tipo}")
+        continue
 
     doc.render(context)
 
-    nome_arquivo = f"contrato_{row['Nome fantasia']}.docx"
+    nome_arquivo = f"contrato_{row['Nome Fantasia']}.docx"
 
     caminho = os.path.join("contratos/", nome_arquivo)
     doc.save(caminho)
+
+    caminho_pdf = converter_docx_para_pdf(caminho)
+
+    nome_documento = nome_arquivo.replace(".docx", "")
+
+    # resposta = enviar_para_autentique(
+    #     caminho_pdf,
+    #     nome_documento=nome_documento,
+    #     nome_signatario=expositor["RESPONSAVELCONTRATUALEXPOSITOR"],
+    #     email_signatario=row["E-mail (Sócio proprietário)"]
+    #     #telefone_signatario=row["Telefone (Sócio proprietário)"]
+    # )
+
+    # if "errors" in resposta:
+    #     print("ERRO AO ENVIAR:", resposta)
+    #     continue
+    # else: print("CONTRATO POSTADO")
+
+    # print(json.dumps(resposta, indent=2))
+
+    #document_id = resposta["data"]["createDocument"]["id"]
+    #print("ID:", document_id)
+
     count +=1
     print(f"[{count},{total_contratos}] CONTRATOS GERADOS")
 

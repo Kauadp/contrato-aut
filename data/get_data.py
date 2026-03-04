@@ -18,7 +18,7 @@ def carregar_expositores(url = 'https://timealfaiataria-my.sharepoint.com/:x:/g/
 
     file = BytesIO(response.content)
     df = pd.read_excel(file, sheet_name="CONTRATOS")
-
+    
     # remover espaços extras nas colunas
     df.columns = df.columns.str.strip()
 
@@ -26,7 +26,6 @@ def carregar_expositores(url = 'https://timealfaiataria-my.sharepoint.com/:x:/g/
     df = df.fillna("")
 
     # Filtro Inicial
-    df = df[df["Tipo de STAND:"] == "STAND"]
     df = df[df["Contrato Status"] == "Aguardando"]
 
     return df
@@ -87,8 +86,11 @@ def preparar_expositor(row):
     restante = valor_restante(valor)
 
     expositor = {
+
+        #### STAND ####
+
         "EXPOSITOR": limpar_texto(row["Razão social"]),
-        "NOMEFANTASIAEXPOSITOR": limpar_texto(row["Nome fantasia"]),
+        "NOMEFANTASIAEXPOSITOR": limpar_texto(row["Nome Fantasia"]),
         "CNPJEXPOSITOR": limpar_texto(row["CNPJ"]),
         "INSCRICAOESTADUALEXPOSITOR": limpar_texto(row["Inscrição Estadual"]),
         "ENDERECOSEDEEXPOSITOR": limpar_texto(row["Endereço comercial"]),
@@ -106,6 +108,17 @@ def preparar_expositor(row):
         "VALORRESTANTE": formatar_real(restante),
 
         "VALOREXTENSO": num2words(valor, lang="pt_BR") + " reais",
+
+        #### FOOD ####
+
+        "NOMEFANTASIAORGANIZADOR": limpar_texto(row["Nome Fantasia"]),
+        "CNPJORGANIZADOR": limpar_texto(row["CNPJ"]),
+        "ENDERECOCOMPLETOORGANIZADOR": limpar_texto(row["Endereço comercial"]),
+        "DOCUMENTOREPRESENTENTAEXPOSITOR": limpar_texto(row["Nome Fantasia"]),
+        "DOCUMENTOEXPOSITOR": limpar_texto(row["CPF (TITULAR CNPJ)"]),
+        "RAZAOEXPOSITOR2": limpar_texto(row["Razão social"]),
+        "DOCUMENTOEXPOSITOR2": limpar_texto(row["CPF (TITULAR CNPJ)"])
+
     }
 
     return expositor
