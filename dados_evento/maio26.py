@@ -64,7 +64,7 @@ evento_food = {
     "CUSTOCOPOEXAGERADO2": "10,00",
     "MULTAEXPOSITORABORDAGEM2": "1.000,00",
     "MULTACONTRATACAOMENORES": "1.000,00 (um mil reais)", 
-    "MULTAAGRESSAO": "", # No caso de conduta inadequada, tais como agressões verbais ou físicas, ou qualquer comportamento que descredencie o EXPOSITOR, seja em relação aos ORGANIZADORES, aos colegas EXPOSITORES ou CLIENTES, a ORGANIZAÇÃO do Evento poderá rescindir seu contrato, solicitando a sua retirada imediata, sem direito a receber o valor dos produtos vendidos quando aplicável, e aplicar multa não compensatória nesse valor
+    "MULTAAGRESSAO": "2.000,00",
     "MULTAPRODUTOSNAOALIMENTICIOS": "1.000,00", 
     "MULTAREPASSEESPACO": "5.000,00 (cinco mil reais)", 
     "MULTAATRASOPRESENCA": "100,00",
