@@ -49,6 +49,22 @@ def converter_docx_para_pdf(caminho_docx):
     convert(caminho_docx, keep_active=True)
     return caminho_docx.replace(".docx", ".pdf")
 
+def extrair_email(email_raw):
+
+    if not email_raw:
+        return None
+
+    email_raw = str(email_raw).strip()
+
+    # pega todos emails válidos da string
+    regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b'
+    emails = re.findall(regex, email_raw)
+
+    if emails:
+        return emails[0]  # pega só o primeiro
+    else:
+        return None
+
 print("INICIANDO GERAÇÃO DE CONTRATOS")
 
 start_time = time.perf_counter()
@@ -61,6 +77,7 @@ count = 0
 
 cnpjs_invalidos = []
 cnpjs_nao_encontrados = []
+emails_invalidos = []
 
 PAGAMENTO_PARCELADO = "10% DE ENTRADA E O RESTANTE PARCELADO EM ATÉ 6X SEM JUROS"
 PAGAMENTO_AVISTA = "PIX COM 5% DE DESCONTO"
@@ -126,11 +143,18 @@ for _, row in df.iterrows():
 
     nome_documento = nome_arquivo.replace(".docx", "")
 
+    email = extrair_email(row["E-mail (Sócio proprietário)"])
+
+    if not email:
+        emails_invalidos.append(row["Nome Fantasia"])
+        print("Email inválido ou não encontrado — pulando envio para Autentique\n")
+        continue
+
     resposta = enviar_para_autentique(
         caminho_pdf,
         nome_documento=nome_documento,
         nome_signatario=expositor["RESPONSAVELCONTRATUALEXPOSITOR"],
-        email_signatario=row["E-mail (Sócio proprietário)"]
+        email_signatario=email
         #telefone_signatario=row["Telefone (Sócio proprietário)"]
     )
 
@@ -160,6 +184,11 @@ for nome in cnpjs_invalidos:
 
 print("\nCNPJs não encontrados na Receita:")
 for nome in cnpjs_nao_encontrados:
+    print("-", nome)
+
+print("\n==============================")
+print("Emails inválidos na planilha:")
+for nome in emails_invalidos:
     print("-", nome)
 
 print("Contratos gerados!",

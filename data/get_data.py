@@ -111,9 +111,6 @@ def preparar_expositor(row):
 
         #### FOOD ####
 
-        "NOMEFANTASIAORGANIZADOR": limpar_texto(row["Nome Fantasia"]),
-        "CNPJORGANIZADOR": limpar_texto(row["CNPJ"]),
-        "ENDERECOCOMPLETOORGANIZADOR": limpar_texto(row["Endereço comercial"]),
         "DOCUMENTOREPRESENTENTAEXPOSITOR": limpar_texto(row["Nome Fantasia"]),
         "DOCUMENTOEXPOSITOR": limpar_texto(row["CPF (TITULAR CNPJ)"]),
         "RAZAOEXPOSITOR2": limpar_texto(row["Razão social"]),
