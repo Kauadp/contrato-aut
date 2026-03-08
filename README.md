@@ -23,7 +23,59 @@ Com a automação, todo o processo passou a ser executado **de forma totalmente 
 
 ---
 
-# 🚀 Funcionalidades
+# �️ Instalação e Configuração
+
+## Pré-requisitos
+
+- Python 3.12+
+- Conta na [Autentique](https://autentique.com.br/) para obter token API
+- Acesso à planilha Excel 365 hospedada no OneDrive/SharePoint
+
+## Passos de Instalação
+
+1. **Clone o repositório**:
+   ```bash
+   git clone https://github.com/seu-usuario/contrato-aut.git
+   cd contrato-aut
+   ```
+
+2. **Crie um ambiente virtual**:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # Linux/Mac
+   # ou venv\Scripts\activate no Windows
+   ```
+
+3. **Instale as dependências**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Configure as variáveis de ambiente**:
+   - Copie o arquivo `.env.example` para `.env`:
+     ```bash
+     cp .env.example .env
+     ```
+   - Edite o `.env` com suas chaves reais:
+     ```
+     AUTENTIQUE_TOKEN=sua_chave_api_aqui
+     EXCEL_URL=https://seu-link-sharepoint-aqui
+     ```
+
+5. **Execute a aplicação**:
+   ```bash
+   python app.py
+   ```
+
+## ⚠️ Segurança e Configuração
+
+- **Nunca commite o arquivo `.env`** no repositório (já está no `.gitignore`).
+- Cada usuário/vendedor deve configurar seu próprio `.env` com suas credenciais.
+- Para distribuição, forneça apenas o `.env.example` como template.
+
+---
+
+# �🚀 Funcionalidades
 
 ## 📥 Integração com Excel 365
 
@@ -183,6 +235,50 @@ Manual | 20 minutos |
 Automação | 20 segundos |
 
 Isso representa uma melhoria de aproximadamente **60x na velocidade do processo**.
+
+---
+
+# 📦 Distribuição e Implantação
+
+## Para Desenvolvedores/Equipe Interna
+
+Siga os passos de instalação acima. O repositório contém:
+
+- Código fonte Python
+- Templates de contrato
+- Scripts de automação
+
+## Para Usuários Finais (Vendedores)
+
+### Opção 1: Executável (.exe) - Recomendado
+
+1. Baixe o arquivo `app.exe` da seção **Releases** do GitHub.
+2. Execute o `.exe` diretamente (não requer instalação do Python).
+3. Configure o `.env` com suas credenciais (veja instruções abaixo).
+
+### Opção 2: Código Fonte
+
+1. Clone o repositório.
+2. Instale Python 3.12+.
+3. Siga os passos de instalação.
+4. Execute `python app.py`.
+
+## Configuração de Credenciais
+
+Cada usuário deve configurar suas próprias credenciais:
+
+1. Copie `.env.example` para `.env`.
+2. Edite o `.env`:
+   - `AUTENTIQUE_TOKEN`: Obtenha na [Autentique](https://autentique.com.br/).
+   - `EXCEL_URL`: Link da planilha Excel 365 (OneDrive/SharePoint).
+
+**Importante:** Nunca compartilhe seu `.env` com terceiros.
+
+## Segurança
+
+- Dados sensíveis (tokens, URLs) são armazenados localmente no `.env`.
+- O `.env` não é incluído no repositório (protegido por `.gitignore`).
+- Cada instalação requer configuração individual de credenciais.
 
 ---
 

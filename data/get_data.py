@@ -2,12 +2,15 @@ import pandas as pd
 from num2words import num2words
 import requests
 from io import BytesIO
+from config import EXCEL_URL
 
 
-def carregar_expositores(url = 'https://timealfaiataria-my.sharepoint.com/:x:/g/personal/ldr02_alfaiatariadeideias_com_br/IQAkbIGee1upR5u973Mlw3ZmAbLL4eDotl780N5o_-wgFHQ?e=aWswYS&download=1'):
+def carregar_expositores(url=None):
     """
     Carrega a planilha de expositores e faz limpeza básica.
     """
+    if url is None:
+        url = EXCEL_URL
 
     headers = {
         "User-Agent": "Mozilla/5.0"

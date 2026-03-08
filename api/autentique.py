@@ -1,10 +1,7 @@
 import requests
 import os
-from dotenv import load_dotenv
+from config import AUTENTIQUE_TOKEN
 import json
-load_dotenv()
-
-AUTENTIQUE_TOKEN = os.getenv("AUTENTIQUE_TOKEN")
 
 def enviar_para_autentique(
     caminho_pdf,
