@@ -1,10 +1,44 @@
 import tkinter as tk
 from tkinter import scrolledtext, messagebox
-import subprocess
 import sys
 import os
 import threading
 import queue
+import io
+from contextlib import redirect_stdout
+from main import iniciar_processamento
+
+import sys
+import io
+
+if sys.stdout is None:
+    sys.stdout = io.StringIO()
+if sys.stderr is None:
+    sys.stderr = io.StringIO()
+
+class QueueWriter(io.StringIO):
+    def __init__(self, queue):
+        super().__init__()
+        self.queue = queue
+
+    def write(self, text):
+        super().write(text)
+        # Process each line
+        lines = text.split('\n')
+        for line in lines:
+            if line.strip():
+                self.queue.put(('log', line.strip()))
+                # Add debugs based on content
+                if "INICIANDO" in line:
+                    self.queue.put(('info', "🎯 Iniciando geração de contratos..."))
+                elif "Gerando contrato para:" in line:
+                    self.queue.put(('info', f"📄 {line.strip()}"))
+                elif "CNPJ inválido" in line:
+                    self.queue.put(('warning', "⚠️ CNPJ inválido detectado!"))
+                elif "CONTRATOS GERADOS" in line:
+                    self.queue.put(('success', f"✅ {line.strip()}"))
+                elif "ERRO" in line.upper():
+                    self.queue.put(('error', f"❌ {line.strip()}"))
 
 class ContractGeneratorApp:
     def __init__(self, root):
@@ -44,6 +78,7 @@ class ContractGeneratorApp:
         self.success_label = tk.Label(self.summary_frame, text="", fg="green")
 
         self.queue = queue.Queue()
+        self.queue_writer = QueueWriter(self.queue)
 
     def start_generation(self):
         self.generate_button.config(state=tk.DISABLED)
@@ -54,34 +89,10 @@ class ContractGeneratorApp:
 
     def run_generation(self):
         try:
-            process = subprocess.Popen(
-                [sys.executable, "main.py"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                cwd=os.getcwd()
-            )
-
-            logs = ""
-            for line in process.stdout:
-                logs += line
-                self.queue.put(('log', line.strip()))
-
-                # Adicionar debugs baseados no conteúdo
-                if "INICIANDO" in line:
-                    self.queue.put(('info', "🎯 Iniciando geração de contratos..."))
-                elif "Gerando contrato para:" in line:
-                    self.queue.put(('info', f"📄 {line.strip()}"))
-                elif "CNPJ inválido" in line:
-                    self.queue.put(('warning', "⚠️ CNPJ inválido detectado!"))
-                elif "CONTRATOS GERADOS" in line:
-                    self.queue.put(('success', f"✅ {line.strip()}"))
-                elif "ERRO" in line.upper():
-                    self.queue.put(('error', f"❌ {line.strip()}"))
-
-            process.wait()
-            returncode = process.returncode
-            self.queue.put(('done', (returncode, logs)))
+            with redirect_stdout(self.queue_writer):
+                iniciar_processamento()
+            logs = self.queue_writer.getvalue()
+            self.queue.put(('done', (0, logs)))
         except Exception as e:
             self.queue.put(('error', f"Erro ao executar: {str(e)}"))
             self.queue.put(('done', (1, "")))

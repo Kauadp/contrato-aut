@@ -2,6 +2,7 @@ from docxtpl import DocxTemplate
 import os
 import time
 from docx2pdf import convert
+import sys
 
 from dados_evento.maio26 import evento_stand, evento_food
 from data.get_data import carregar_expositores, preparar_expositor
@@ -11,6 +12,16 @@ import base64
 import json
 import unicodedata
 import re
+
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 def normalizar_nome(nome):
     if not nome:
@@ -65,133 +76,137 @@ def extrair_email(email_raw):
     else:
         return None
 
-print("INICIANDO GERAÇÃO DE CONTRATOS")
+def iniciar_processamento():
+    print("INICIANDO GERAÇÃO DE CONTRATOS")
 
-start_time = time.perf_counter()
+    start_time = time.perf_counter()
 
-df = carregar_expositores()
+    df = carregar_expositores()
 
-total_contratos = len(df)
+    total_contratos = len(df)
 
-count = 0
+    count = 0
 
-cnpjs_invalidos = []
-cnpjs_nao_encontrados = []
-emails_invalidos = []
+    cnpjs_invalidos = []
+    cnpjs_nao_encontrados = []
+    emails_invalidos = []
 
-PAGAMENTO_PARCELADO = "10% DE ENTRADA E O RESTANTE PARCELADO EM ATÉ 6X SEM JUROS"
-PAGAMENTO_AVISTA = "PIX COM 5% DE DESCONTO"
+    PAGAMENTO_PARCELADO = "10% DE ENTRADA E O RESTANTE PARCELADO EM ATÉ 6X SEM JUROS"
+    PAGAMENTO_AVISTA = "PIX COM 5% DE DESCONTO"
 
-if not os.path.exists("contratos"):
-        os.makedirs("contratos")
+    if not os.path.exists("contratos"):
+            os.makedirs("contratos")
 
-for _, row in df.iterrows():
+    for _, row in df.iterrows():
 
-    expositor = preparar_expositor(row)
+        expositor = preparar_expositor(row)
 
-    tipo = row["Tipo de STAND:"]
-    pagamento = row["Forma de pagamento"]
+        tipo = row["Tipo de STAND:"]
+        pagamento = row["Forma de pagamento"]
 
-    print(f"Gerando contrato para: {row['Nome Fantasia']}\n")
+        print(f"Gerando contrato para: {row['Nome Fantasia']}\n")
 
-    ativo, socios, status = validar_cnpj(row["CNPJ"])
+        ativo, socios, status = validar_cnpj(row["CNPJ"])
 
-    if status == 400:
-        cnpjs_invalidos.append(row["Nome Fantasia"])
-        print("CNPJ inválido — pulando contrato\n")
-        continue
+        if status == 400:
+            cnpjs_invalidos.append(row["Nome Fantasia"])
+            print("CNPJ inválido — pulando contrato\n")
+            continue
 
-    if status == 404:
-        cnpjs_nao_encontrados.append(row["Nome Fantasia"])
+        if status == 404:
+            cnpjs_nao_encontrados.append(row["Nome Fantasia"])
 
-    if status not in [200, 404]:
-        print("Erro ao consultar API\n")
-        continue
+        if status not in [200, 404]:
+            print("Erro ao consultar API\n")
+            continue
 
-    if not ativo:
-        print("CNPJ não está ativo\n")
-        continue
+        if not ativo:
+            print("CNPJ não está ativo\n")
+            continue
 
-    if tipo == "STAND":
-        context = {**evento_stand, **expositor}
+        if tipo == "STAND":
+            context = {**evento_stand, **expositor}
 
-        if pagamento == PAGAMENTO_PARCELADO:
-            doc = DocxTemplate("template/template_parcelado.docx")
+            if pagamento == PAGAMENTO_PARCELADO:
+                doc = DocxTemplate(resource_path("template/template_parcelado.docx"))
+            else:
+                doc = DocxTemplate(resource_path("template/template_avista.docx"))
+
+        elif tipo == "FOOD":
+            context = {**evento_food, **expositor}
+
+            if pagamento == PAGAMENTO_PARCELADO:
+                doc = DocxTemplate(resource_path("template/template_food_parcelado.docx"))
+            else:
+                doc = DocxTemplate(resource_path("template/template_food_avista.docx"))
+
         else:
-            doc = DocxTemplate("template/template_avista.docx")
+            print(f"Tipo inválido: {tipo}")
+            continue
 
-    elif tipo == "FOOD":
-        context = {**evento_food, **expositor}
+        doc.render(context)
 
-        if pagamento == PAGAMENTO_PARCELADO:
-            doc = DocxTemplate("template/template_food_parcelado.docx")
-        else:
-            doc = DocxTemplate("template/template_food_avista.docx")
+        nome_arquivo = f"contrato_{row['Nome Fantasia']}.docx"
 
-    else:
-        print(f"Tipo inválido: {tipo}")
-        continue
+        caminho = os.path.join("contratos/", nome_arquivo)
+        doc.save(caminho)
 
-    doc.render(context)
+        caminho_pdf = converter_docx_para_pdf(caminho)
 
-    nome_arquivo = f"contrato_{row['Nome Fantasia']}.docx"
+        nome_documento = nome_arquivo.replace(".docx", "")
 
-    caminho = os.path.join("contratos/", nome_arquivo)
-    doc.save(caminho)
+        email = extrair_email(row["E-mail (Sócio proprietário)"])
 
-    caminho_pdf = converter_docx_para_pdf(caminho)
+        if not email:
+            emails_invalidos.append(row["Nome Fantasia"])
+            print("Email inválido ou não encontrado — pulando envio para Autentique\n")
+            continue
 
-    nome_documento = nome_arquivo.replace(".docx", "")
+        resposta = enviar_para_autentique(
+            caminho_pdf,
+            nome_documento=nome_documento,
+            nome_signatario=expositor["RESPONSAVELCONTRATUALEXPOSITOR"],
+            email_signatario=email
+            #telefone_signatario=row["Telefone (Sócio proprietário)"]
+        )
 
-    email = extrair_email(row["E-mail (Sócio proprietário)"])
+        if "errors" in resposta:
+            print("ERRO AO ENVIAR:", resposta)
+            continue
+        else: print("CONTRATO POSTADO")
 
-    if not email:
-        emails_invalidos.append(row["Nome Fantasia"])
-        print("Email inválido ou não encontrado — pulando envio para Autentique\n")
-        continue
+        print(json.dumps(resposta, indent=2))
 
-    resposta = enviar_para_autentique(
-        caminho_pdf,
-        nome_documento=nome_documento,
-        nome_signatario=expositor["RESPONSAVELCONTRATUALEXPOSITOR"],
-        email_signatario=email
-        #telefone_signatario=row["Telefone (Sócio proprietário)"]
-    )
+        document_id = resposta["data"]["createDocument"]["id"]
+        print("ID:", document_id)
 
-    if "errors" in resposta:
-        print("ERRO AO ENVIAR:", resposta)
-        continue
-    else: print("CONTRATO POSTADO")
+        count +=1
+        print(f"[{count},{total_contratos}] CONTRATOS GERADOS")
 
-    print(json.dumps(resposta, indent=2))
+    end_time = time.perf_counter()
 
-    document_id = resposta["data"]["createDocument"]["id"]
-    print("ID:", document_id)
+    tempo_total = end_time - start_time
 
-    count +=1
-    print(f"[{count},{total_contratos}] CONTRATOS GERADOS")
+    tempo_medio = tempo_total / total_contratos
 
-end_time = time.perf_counter()
+    print("\n==============================")
+    print("CNPJs inválidos na planilha:")
+    for nome in cnpjs_invalidos:
+        print("-", nome)
 
-tempo_total = end_time - start_time
+    print("\nCNPJs não encontrados na Receita:")
+    for nome in cnpjs_nao_encontrados:
+        print("-", nome)
 
-tempo_medio = tempo_total / total_contratos
+    print("\n==============================")
+    print("Emails inválidos na planilha:")
+    for nome in emails_invalidos:
+        print("-", nome)
 
-print("\n==============================")
-print("CNPJs inválidos na planilha:")
-for nome in cnpjs_invalidos:
-    print("-", nome)
+    print("Contratos gerados!",
+          f"\n[{count},{total_contratos}] CONTRATOS GERADOS",
+          f"\nTempo Gasto: {round(tempo_total)} Segundos",
+          f"\nMÉDIA DE {round(tempo_medio,3)} SEGUNDOS POR CONTRATO")
 
-print("\nCNPJs não encontrados na Receita:")
-for nome in cnpjs_nao_encontrados:
-    print("-", nome)
-
-print("\n==============================")
-print("Emails inválidos na planilha:")
-for nome in emails_invalidos:
-    print("-", nome)
-
-print("Contratos gerados!",
-      f"\n[{count},{total_contratos}] CONTRATOS GERADOS",
-      f"\nTempo Gasto: {round(tempo_total)} Segundos",
-      f"\nMÉDIA DE {round(tempo_medio,3)} SEGUNDOS POR CONTRATO")
+if __name__ == "__main__":
+    iniciar_processamento()
