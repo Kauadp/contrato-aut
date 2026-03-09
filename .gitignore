@@ -1,6 +1,5 @@
 # Arquivos de ambiente e configuração local
 .env
-config.py
 
 # Cache e temporários
 __pycache__/
