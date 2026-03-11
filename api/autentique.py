@@ -34,20 +34,20 @@ def enviar_para_autentique(
                 "name": nome_documento
             },
             "signers": [
-                {
-                    "name": nome_signatario,
-                    "email": email_signatario,
-                    #"phone": telefone_signatario,
-                    "action": "SIGN",
-                    "order": 2
-                },
 
                 {
                     "name": "VICTOR DE CASTRO PEREIRA",
                     "email": "gabrielly.concecio@alfaiatariadeideias.com.br",
-                    "action": "SIGN",
-                    "order": 1
+                    "action": "SIGN"
+                },
+
+                {
+                    "name": nome_signatario,
+                    "email": email_signatario,
+                    #"phone": telefone_signatario,
+                    "action": "SIGN"
                 }
+
             ]
         }
     }
