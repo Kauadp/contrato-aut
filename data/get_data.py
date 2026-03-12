@@ -29,6 +29,7 @@ def carregar_expositores(url=None):
     df = df.fillna("")
 
     # Filtro Inicial
+    df["Contrato Status"] = df["Contrato Status"].str.strip()
     df = df[df["Contrato Status"] == "Aguardando"]
 
     return df
