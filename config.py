@@ -13,11 +13,9 @@ def resource_path(relative_path):
 
 load_dotenv(resource_path(".env"))
 
-AUTENTIQUE_TOKEN = os.getenv("AUTENTIQUE_TOKEN")
-EXCEL_URL = os.getenv("EXCEL_URL")
+# Variáveis de fallback (compatibilidade com código antigo)
+# Preferir usar EventoService.obter_token_autentique() e obter_url_planilha()
+AUTENTIQUE_TOKEN = os.getenv("AUTENTIQUE_TOKEN")  # Fallback para ES se existir
+EXCEL_URL = os.getenv("EXCEL_URL")  # Fallback para ES se existir
 
-if not AUTENTIQUE_TOKEN:
-    raise ValueError("AUTENTIQUE_TOKEN não encontrado no arquivo .env")
-
-if not EXCEL_URL:
-    raise ValueError("EXCEL_URL não encontrado no arquivo .env")
+# Nota: Validações específicas por evento agora são feitas em EventoService

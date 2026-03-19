@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import scrolledtext, messagebox
+from tkinter import scrolledtext, messagebox, ttk
 import sys
 import os
 import threading
@@ -7,6 +7,7 @@ import queue
 import io
 from contextlib import redirect_stdout
 from main import iniciar_processamento
+from config.eventos import listar_eventos, EVENTO_PADRAO
 
 import sys
 import io
@@ -44,15 +45,35 @@ class ContractGeneratorApp:
     def __init__(self, root):
         self.root = root
         self.root.title("🚀 Automação de Geração de Contratos")
-        self.root.geometry("800x600")
+        self.root.geometry("800x650")
 
         # Título
         self.title_label = tk.Label(root, text="🚀 Automação de Geração de Contratos", font=("Arial", 16, "bold"))
         self.title_label.pack(pady=10)
 
         # Descrição
-        self.desc_label = tk.Label(root, text="Clique no botão abaixo para iniciar a geração de contratos. Os logs serão exibidos em tempo real.")
+        self.desc_label = tk.Label(root, text="Selecione um evento e clique no botão para gerar contratos. Os logs serão exibidos em tempo real.")
         self.desc_label.pack(pady=5)
+
+        # Frame para seleção de evento
+        self.event_frame = tk.Frame(root)
+        self.event_frame.pack(pady=10)
+
+        self.event_label = tk.Label(self.event_frame, text="Evento:")
+        self.event_label.pack(side=tk.LEFT, padx=5)
+
+        # Combo box com eventos disponíveis
+        eventos_disponiveis = list(listar_eventos().keys())
+        self.event_var = tk.StringVar(value=EVENTO_PADRAO)
+
+        self.event_combo = ttk.Combobox(
+            self.event_frame,
+            textvariable=self.event_var,
+            values=eventos_disponiveis,
+            state="readonly",
+            width=20
+        )
+        self.event_combo.pack(side=tk.LEFT, padx=5)
 
         # Botão
         self.generate_button = tk.Button(root, text="🔄 Gerar Contratos Agora", command=self.start_generation, font=("Arial", 12))
@@ -89,8 +110,9 @@ class ContractGeneratorApp:
 
     def run_generation(self):
         try:
+            sigla_evento = self.event_var.get()
             with redirect_stdout(self.queue_writer):
-                iniciar_processamento()
+                iniciar_processamento(sigla_evento=sigla_evento)
             logs = self.queue_writer.getvalue()
             self.queue.put(('done', (0, logs)))
         except Exception as e:

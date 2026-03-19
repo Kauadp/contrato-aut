@@ -3,15 +3,15 @@ import os
 import time
 from docx2pdf import convert
 import sys
-
-from dados_evento.maio26 import evento_stand, evento_food
-from data.get_data import carregar_expositores, preparar_expositor
-from api.autentique import enviar_para_autentique
-from api.brasil_api import validar_cnpj
-import base64
 import json
 import unicodedata
 import re
+
+from data.get_data import carregar_expositores, preparar_expositor
+from api.autentique import enviar_para_autentique
+from api.brasil_api import validar_cnpj
+from services.evento_service import EventoService
+from services.template_service import TemplateService
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
@@ -76,12 +76,43 @@ def extrair_email(email_raw):
     else:
         return None
 
-def iniciar_processamento():
-    print("INICIANDO GERAÇÃO DE CONTRATOS")
+def iniciar_processamento(sigla_evento: str = None):
+    """
+    Inicia o processamento de geração de contratos para um evento específico.
+    
+    Args:
+        sigla_evento: Sigla do evento (ex: 'ES', 'RJ'). Se None, usa o padrão (ES).
+    
+    Raises:
+        ValueError: Se evento não existir ou credenciais não forem encontradas
+    """
+    print(f"INICIANDO GERAÇÃO DE CONTRATOS")
+
+    # Inicializa serviços
+    evento_service = EventoService(sigla_evento)
+    template_service = TemplateService(evento_service.obter_sigla())
+
+    config_evento = evento_service.obter_config()
+    print(f"Evento: {config_evento.nome}\n")
+
+    # Verifica se templates estão disponíveis
+    if not evento_service.verificar_templates_disponiveis():
+        print(f"⚠️  AVISO: Templates para o evento {config_evento.sigla} ainda não foram criados.")
+        print(f"Por favor, crie os templates e ajuste a configuração em config/eventos.py")
+        return
+
+    # Obtém credenciais do evento
+    try:
+        url_planilha = evento_service.obter_url_planilha()
+        token_autentique = evento_service.obter_token_autentique()
+    except ValueError as e:
+        print(f"❌ ERRO DE CONFIGURAÇÃO:\n{e}")
+        return
 
     start_time = time.perf_counter()
 
-    df = carregar_expositores()
+    # Carrega expositores usando a URL correta do evento
+    df = carregar_expositores(url=url_planilha)
 
     total_contratos = len(df)
 
@@ -91,11 +122,11 @@ def iniciar_processamento():
     cnpjs_nao_encontrados = []
     emails_invalidos = []
 
-    PAGAMENTO_PARCELADO = "10% DE ENTRADA E O RESTANTE PARCELADO EM ATÉ 6X SEM JUROS"
-    PAGAMENTO_AVISTA = "PIX COM 5% DE DESCONTO"
-
     if not os.path.exists("contratos"):
             os.makedirs("contratos")
+
+    # Obtém dados contextuais do evento (evento_stand, evento_food)
+    dados_evento = evento_service.obter_dados_evento()
 
     for _, row in df.iterrows():
 
@@ -124,24 +155,25 @@ def iniciar_processamento():
             print("CNPJ não está ativo\n")
             continue
 
-        if tipo == "STAND":
-            context = {**evento_stand, **expositor}
-
-            if pagamento == PAGAMENTO_PARCELADO:
-                doc = DocxTemplate(resource_path("template/template_parcelado.docx"))
-            else:
-                doc = DocxTemplate(resource_path("template/template_avista.docx"))
-
-        elif tipo == "FOOD":
-            context = {**evento_food, **expositor}
-
-            if pagamento == PAGAMENTO_PARCELADO:
-                doc = DocxTemplate(resource_path("template/template_food_parcelado.docx"))
-            else:
-                doc = DocxTemplate(resource_path("template/template_food_avista.docx"))
-
-        else:
+        # Validar tipo
+        if tipo not in ["STAND", "FOOD"]:
             print(f"Tipo inválido: {tipo}")
+            continue
+
+        # Obter dados contextuais do tipo
+        if tipo == "STAND":
+            dados_tipo = evento_service.obter_dados_stand()
+        else:  # FOOD
+            dados_tipo = evento_service.obter_dados_food()
+
+        context = {**dados_tipo, **expositor}
+
+        # Selecionar template usando o serviço
+        try:
+            caminho_template = template_service.obter_caminho_template(tipo, pagamento)
+            doc = DocxTemplate(caminho_template)
+        except FileNotFoundError as e:
+            print(f"ERRO: {e}\n")
             continue
 
         doc.render(context)
@@ -166,7 +198,8 @@ def iniciar_processamento():
             caminho_pdf,
             nome_documento=nome_documento,
             nome_signatario=expositor["RESPONSAVELCONTRATUALEXPOSITOR"],
-            email_signatario=email
+            email_signatario=email,
+            token_autentique=token_autentique
             #telefone_signatario=row["Telefone (Sócio proprietário)"]
         )
 

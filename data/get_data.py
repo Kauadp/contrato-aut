@@ -2,15 +2,27 @@ import pandas as pd
 from num2words import num2words
 import requests
 from io import BytesIO
-from config import EXCEL_URL
 
 
-def carregar_expositores(url=None):
+def carregar_expositores(url):
     """
     Carrega a planilha de expositores e faz limpeza básica.
+    
+    Args:
+        url: URL da planilha Excel a carregar (obrigatório)
+    
+    Returns:
+        DataFrame com expositores filtrados
+        
+    Raises:
+        ValueError: Se URL não for fornecida
+        RequestException: Se houver erro ao baixar a planilha
     """
-    if url is None:
-        url = EXCEL_URL
+    if not url:
+        raise ValueError(
+            "URL da planilha não foi fornecida. "
+            "Use EventoService.obter_url_planilha() para obter a URL do evento."
+        )
 
     headers = {
         "User-Agent": "Mozilla/5.0"
@@ -29,7 +41,7 @@ def carregar_expositores(url=None):
     df = df.fillna("")
 
     # Filtro Inicial
-    df["Contrato Status"] = df["Contrato Status"].str.strip()
+    df["Contrato Status"] = df["Contrato Status"].str.strip().str.capitalize()
     df = df[df["Contrato Status"] == "Aguardando"]
 
     return df
