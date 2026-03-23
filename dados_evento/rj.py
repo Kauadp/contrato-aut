@@ -1,12 +1,47 @@
 """
-Dados específicos do evento Rio de Janeiro (RJ).
-PLACEHOLDER: Templates ainda não existem. Preencher dados quando os templates forem criados.
+Dados específicos do evento Espírito Santo (ES).
+Contém contextos para templates STAND e FOOD.
 """
 
-# TODO: Quando os templates do RJ forem criados, adicionar:
-# evento_stand = { ... }
-# evento_food = { ... }
+from datetime import datetime
+from babel.dates import format_date
 
-# Por enquanto, apenas importações vazias para manter compatibilidade
-evento_stand = None
-evento_food = None
+
+def gerar_data_extenso():
+    """Gera a data atual por extenso em português."""
+    hoje = datetime.now()
+    return format_date(hoje, "EEEE, dd 'de' MMMM 'de' yyyy", locale="pt_BR")
+
+
+# Dados contextuais para template STAND
+evento_stand = {
+    "DESCRICAOEVENTO": "EXAGERADO AGOSTO RIO DE JANEIRO 2026",
+    "CPFREPRESENTANTEORGANIZADOR": "013.714.186-67",
+    "ENDERECOREPRESENTANTEORGANIZADOR": "Braulina Baptista Lopes, 150, Edíficio, Rosario de Fátima, SERRA/ES. CEP: 29161-121",
+    "INSERIRDATADOEVENTO": "De 05 de Agosto de 2026 à 09 de Agosto de 2026",
+    "ANTECEDENCIAENTREGAESPACO": "1",
+    "REFERENCIALIBERACAO": "04/08/2026",
+    "HORAINICIOLIBERACAO": "08:00",
+    "HORATERMINOLIBERACAO": "20:00",
+    "PENALIDADEIRREGULARIDADE": "R$ 1.000,00",
+    "PENALIDADECONTRATACAOMENOR": "R$ 1.000,00",
+    "PENALIDADERESCISAO": "R$ 1.000,00",
+    "EXPOSITORDATALIMITEPAGAMENTO": "22/07/2026",
+    "PRAZOENVIOLOGOMARCA": "24/07/2026",
+    "PENALIDADEMARCA": "R$ 1.000,00",
+    "PENALIDADEDESVIOFINALIDADE": "R$ 1.000,00",
+    "PORCENTEGEMLIMITEESTOQUEMINIMO": "20%",
+    "PORCENTAGEMINFRACAOLIMITEESTOQUEMINIMO": "30%",
+    "PENALIDADEDANOSMINIMOS": "R$ 50,00",
+    "PENALIDADEDANOSMAXIMOS": "R$ 5.000,00",
+    "PENALIDADESUBLOCACAO": "R$ 5.000,00",
+    "INFRACAODESCONTO": "R$ 1.000,00",
+    "VALECOMPRA": "R$ 100,00",
+    "PENALIDADEQUEBRACONTRATO": "R$ 2.000,00",
+    "PENALIDADEATRASOABERTURA": "R$ 100,00",
+    "DATAPAGAMENTOALUGALSTAND": "30/06/2026",
+    "PENALIDADEINFRACAOGERAL": "R$ 1.000,00",
+    "INSERIRDATA": "05/08/2026",
+    "DATAENTRADA": "05/04/2026",
+    "DATAEXTENSO": gerar_data_extenso(),
+}

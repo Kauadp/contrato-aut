@@ -132,7 +132,9 @@ def iniciar_processamento(sigla_evento: str = None):
 
         expositor = preparar_expositor(row)
 
-        tipo = row["Tipo de STAND:"]
+        # Para RJ, a coluna "Tipo de STAND:" pode não existir, então assume "STAND"
+        # Para ES, usa o valor da coluna
+        tipo = row.get("Tipo de STAND:", "STAND")
         pagamento = row["Forma de pagamento"]
 
         print(f"Gerando contrato para: {row['Nome Fantasia']}\n")
@@ -156,7 +158,8 @@ def iniciar_processamento(sigla_evento: str = None):
             continue
 
         # Validar tipo
-        if tipo not in ["STAND", "FOOD"]:
+        tipos_validos = evento_service.obter_config().tipos_stand
+        if tipo not in tipos_validos:
             print(f"Tipo inválido: {tipo}")
             continue
 
@@ -194,24 +197,24 @@ def iniciar_processamento(sigla_evento: str = None):
             print("Email inválido ou não encontrado — pulando envio para Autentique\n")
             continue
 
-        resposta = enviar_para_autentique(
-            caminho_pdf,
-            nome_documento=nome_documento,
-            nome_signatario=expositor["RESPONSAVELCONTRATUALEXPOSITOR"],
-            email_signatario=email,
-            token_autentique=token_autentique
-            #telefone_signatario=row["Telefone (Sócio proprietário)"]
-        )
+        # resposta = enviar_para_autentique(
+        #     caminho_pdf,
+        #     nome_documento=nome_documento,
+        #     nome_signatario=expositor["RESPONSAVELCONTRATUALEXPOSITOR"],
+        #     email_signatario=email,
+        #     token_autentique=token_autentique
+        #     #telefone_signatario=row["Telefone (Sócio proprietário)"]
+        # )
 
-        if "errors" in resposta:
-            print("ERRO AO ENVIAR:", resposta)
-            continue
-        else: print("CONTRATO POSTADO")
+        # if "errors" in resposta:
+        #     print("ERRO AO ENVIAR:", resposta)
+        #     continue
+        # else: print("CONTRATO POSTADO")
 
-        print(json.dumps(resposta, indent=2))
+        # print(json.dumps(resposta, indent=2))
 
-        document_id = resposta["data"]["createDocument"]["id"]
-        print("ID:", document_id)
+        # document_id = resposta["data"]["createDocument"]["id"]
+        # print("ID:", document_id)
 
         count +=1
         print(f"[{count},{total_contratos}] CONTRATOS GERADOS")

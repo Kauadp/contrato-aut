@@ -62,7 +62,7 @@ EVENTOS = {
             "10% DE ENTRADA E O RESTANTE PARCELADO EM ATÉ 6X SEM JUROS",
             "PIX COM 5% DE DESCONTO"
         ],
-        templates_disponiveis=False,  # Placeholder: templates ainda não existem
+        templates_disponiveis=True,
         descricao="Evento RJ (em desenvolvimento)"
     ),
 }

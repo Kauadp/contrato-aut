@@ -2,7 +2,7 @@ import pandas as pd
 from num2words import num2words
 import requests
 from io import BytesIO
-
+import re
 
 def carregar_expositores(url):
     """
@@ -75,14 +75,30 @@ def valor_restante(valor):
 
 def limpar_valor(valor):
     """
-    Limpa valores numéricos.
+    Converte valores no formato brasileiro para float.
+    Aceita:
+    - R$ 1.234,56
+    - 1.234,56
+    - 1234,56
+    - 1234.56
+    - "", NaN
     """
 
     if valor == "" or pd.isna(valor):
         return 0.0
 
+    if isinstance(valor, (int, float)):
+        return float(valor)
+
     if isinstance(valor, str):
-        valor = valor.replace(".", "").replace(",", ".")
+        # Remove R$, espaços e qualquer coisa que não seja número, vírgula, ponto ou sinal
+        valor = re.sub(r"[^\d,.\-]", "", valor)
+
+        # Se tiver vírgula, assume formato brasileiro
+        if "," in valor:
+            valor = valor.replace(".", "")
+            valor = valor.replace(",", ".")
+
     return float(valor)
 
 
