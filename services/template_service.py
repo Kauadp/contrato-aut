@@ -44,7 +44,7 @@ class TemplateService:
         self.caminho_templates = resource_path(caminho_templates)
 
     def obter_caminho_template(
-        self, tipo: str, forma_pagamento: str
+        self, tipo: str, forma_pagamento: str, comissionado: bool = False
     ) -> str:
         """
         Retorna o caminho completo do template.
@@ -52,6 +52,7 @@ class TemplateService:
         Args:
             tipo: Tipo de stand ('STAND' ou 'FOOD')
             forma_pagamento: Forma de pagamento (string completa)
+            comissionado: Se True, busca template com sufixo '_comissionado'
         
         Returns:
             Caminho absoluto do template (.docx)
@@ -63,10 +64,14 @@ class TemplateService:
         tipo_prefix = self._normalizar_tipo(tipo)
         pagamento_norm = self._normalizar_pagamento(forma_pagamento)
 
-        # Convenção: template_[tipo_prefix][pagamento]_[sigla_evento].docx
+        # Convenção: template_[tipo_prefix][pagamento][_comissionado]_[sigla_evento].docx
         # STAND + parcelado + ES -> template_parcelado_es.docx
         # FOOD + parcelado + RJ -> template_food_parcelado_rj.docx
-        nome_template = f"template_{tipo_prefix}{pagamento_norm}_{self.sigla_evento.lower()}.docx"
+        sufixo_comissionado = "_comissionado" if comissionado else ""
+        nome_template = (
+            f"template_{tipo_prefix}{pagamento_norm}{sufixo_comissionado}_"
+            f"{self.sigla_evento.lower()}.docx"
+        )
         caminho_completo = os.path.join(self.caminho_templates, nome_template)
 
         if not os.path.exists(caminho_completo):
@@ -110,13 +115,13 @@ class TemplateService:
         else:
             return self.PAGAMENTO_AVISTA
 
-    def verificar_template_existe(self, tipo: str, forma_pagamento: str) -> bool:
+    def verificar_template_existe(self, tipo: str, forma_pagamento: str, comissionado: bool = False) -> bool:
         """
         Verifica se um template existe sem lançar exceção.
         Útil para validações prévias.
         """
         try:
-            self.obter_caminho_template(tipo, forma_pagamento)
+            self.obter_caminho_template(tipo, forma_pagamento, comissionado=comissionado)
             return True
         except (FileNotFoundError, ValueError):
             return False

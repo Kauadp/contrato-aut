@@ -93,6 +93,7 @@ def iniciar_processamento(sigla_evento: str = None):
     template_service = TemplateService(evento_service.obter_sigla())
 
     config_evento = evento_service.obter_config()
+    sigla_evento = config_evento.sigla.upper()
     print(f"Evento: {config_evento.nome}\n")
 
     # Verifica se templates estão disponíveis
@@ -171,9 +172,20 @@ def iniciar_processamento(sigla_evento: str = None):
 
         context = {**dados_tipo, **expositor}
 
+        comissionado_habilitado_evento = sigla_evento in {"RJ", "SP"}
+        contrato_comissionado = (
+            comissionado_habilitado_evento
+            and tipo == "STAND"
+            and expositor.get("EHCOMISSIONADO", False)
+        )
+
         # Selecionar template usando o serviço
         try:
-            caminho_template = template_service.obter_caminho_template(tipo, pagamento)
+            caminho_template = template_service.obter_caminho_template(
+                tipo,
+                pagamento,
+                comissionado=contrato_comissionado
+            )
             doc = DocxTemplate(caminho_template)
         except FileNotFoundError as e:
             print(f"ERRO: {e}\n")
@@ -197,24 +209,24 @@ def iniciar_processamento(sigla_evento: str = None):
             print("Email inválido ou não encontrado — pulando envio para Autentique\n")
             continue
 
-        resposta = enviar_para_autentique(
-            caminho_pdf,
-            nome_documento=nome_documento,
-            nome_signatario=expositor["RESPONSAVELCONTRATUALEXPOSITOR"],
-            email_signatario=email,
-            token_autentique=token_autentique
+        #resposta = enviar_para_autentique(
+        #    caminho_pdf,
+        #    nome_documento=nome_documento,
+        #    nome_signatario=expositor["RESPONSAVELCONTRATUALEXPOSITOR"],
+        #    email_signatario=email,
+        #    token_autentique=token_autentique
             #telefone_signatario=row["Telefone (Sócio proprietário)"]
-        )
+        #)
 
-        if "errors" in resposta:
-            print("ERRO AO ENVIAR:", resposta)
-            continue
-        else: print("CONTRATO POSTADO")
+       # if "errors" in resposta:
+       #     print("ERRO AO ENVIAR:", resposta)
+       #     continue
+       # else: print("CONTRATO POSTADO")
 
-        print(json.dumps(resposta, indent=2))
+        #print(json.dumps(resposta, indent=2))
 
-        document_id = resposta["data"]["createDocument"]["id"]
-        print("ID:", document_id)
+        #document_id = resposta["data"]["createDocument"]["id"]
+        #print("ID:", document_id)
 
         count +=1
         print(f"[{count},{total_contratos}] CONTRATOS GERADOS")
